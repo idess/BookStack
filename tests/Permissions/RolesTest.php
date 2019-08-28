@@ -78,6 +78,28 @@ class RolesTest extends BrowserKitTest
             ->dontSee($testRoleUpdateName);
     }
 
+    public function test_admin_role_cannot_be_removed_if_last_admin()
+    {
+        $adminRole = Role::where('system_name', '=', 'admin')->first();
+        $adminUser = $this->getAdmin();
+        $adminRole->users()->where('id', '!=', $adminUser->id)->delete();
+        $this->assertEquals($adminRole->users()->count(), 1);
+
+        $viewerRole = $this->getViewer()->roles()->first();
+
+        $editUrl = '/settings/users/' . $adminUser->id;
+        $this->actingAs($adminUser)->put($editUrl, [
+            'name' => $adminUser->name,
+            'email' => $adminUser->email,
+            'roles' => [
+                'viewer' => strval($viewerRole->id),
+            ]
+        ])->followRedirects();
+
+        $this->seePageIs($editUrl);
+        $this->see('This user is the only user assigned to the administrator role');
+    }
+
     public function test_manage_user_permission()
     {
         $this->actingAs($this->user)->visit('/settings/users')
@@ -85,6 +107,53 @@ class RolesTest extends BrowserKitTest
         $this->giveUserPermissions($this->user, ['users-manage']);
         $this->actingAs($this->user)->visit('/settings/users')
             ->seePageIs('/settings/users');
+    }
+
+    public function test_manage_users_permission_shows_link_in_header_if_does_not_have_settings_manage_permision()
+    {
+        $usersLink = 'href="'.url('/settings/users') . '"';
+        $this->actingAs($this->user)->visit('/')->dontSee($usersLink);
+        $this->giveUserPermissions($this->user, ['users-manage']);
+        $this->actingAs($this->user)->visit('/')->see($usersLink);
+        $this->giveUserPermissions($this->user, ['settings-manage', 'users-manage']);
+        $this->actingAs($this->user)->visit('/')->dontSee($usersLink);
+    }
+
+    public function test_user_cannot_change_email_unless_they_have_manage_users_permission()
+    {
+        $userProfileUrl = '/settings/users/' . $this->user->id;
+        $originalEmail = $this->user->email;
+        $this->actingAs($this->user);
+
+        $this->visit($userProfileUrl)
+            ->assertResponseOk()
+            ->seeElement('input[name=email][disabled]');
+        $this->put($userProfileUrl, [
+            'name' => 'my_new_name',
+            'email' => 'new_email@example.com',
+        ]);
+        $this->seeInDatabase('users', [
+            'id' => $this->user->id,
+            'email' => $originalEmail,
+            'name' => 'my_new_name',
+        ]);
+
+        $this->giveUserPermissions($this->user, ['users-manage']);
+
+        $this->visit($userProfileUrl)
+            ->assertResponseOk()
+            ->dontSeeElement('input[name=email][disabled]')
+            ->seeElement('input[name=email]');
+        $this->put($userProfileUrl, [
+            'name' => 'my_new_name_2',
+            'email' => 'new_email@example.com',
+        ]);
+
+        $this->seeInDatabase('users', [
+            'id' => $this->user->id,
+            'email' => 'new_email@example.com',
+            'name' => 'my_new_name_2',
+        ]);
     }
 
     public function test_user_roles_manage_permission()
@@ -183,7 +252,7 @@ class RolesTest extends BrowserKitTest
         $this->checkAccessPermission('bookshelf-create-all', [
             '/create-shelf'
         ], [
-            '/shelves' => 'Create New Shelf'
+            '/shelves' => 'New Shelf'
         ]);
 
         $this->visit('/create-shelf')
@@ -600,8 +669,8 @@ class RolesTest extends BrowserKitTest
     {
         $user = \BookStack\Auth\User::first();
         $this->asAdmin()->visit('/settings/users/' . $user->id)
-            ->seeElement('#roles-admin')
-            ->seeElement('#roles-public');
+            ->seeElement('[name="roles[admin]"]')
+            ->seeElement('[name="roles[public]"]');
     }
 
     public function test_public_role_visible_in_role_listing()

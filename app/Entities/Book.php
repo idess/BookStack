@@ -25,9 +25,9 @@ class Book extends Entity
     public function getUrl($path = false)
     {
         if ($path !== false) {
-            return baseUrl('/books/' . urlencode($this->slug) . '/' . trim($path, '/'));
+            return url('/books/' . urlencode($this->slug) . '/' . trim($path, '/'));
         }
-        return baseUrl('/books/' . urlencode($this->slug));
+        return url('/books/' . urlencode($this->slug));
     }
 
     /**
@@ -38,13 +38,13 @@ class Book extends Entity
      */
     public function getBookCover($width = 440, $height = 250)
     {
-        $default = baseUrl('/book_default_cover.png');
+        $default = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
         if (!$this->image_id) {
             return $default;
         }
 
         try {
-            $cover = $this->cover ? baseUrl($this->cover->getThumb($width, $height, false)) : $default;
+            $cover = $this->cover ? url($this->cover->getThumb($width, $height, false)) : $default;
         } catch (\Exception $err) {
             $cover = $default;
         }
@@ -70,6 +70,15 @@ class Book extends Entity
     }
 
     /**
+     * Get the direct child pages of this book.
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function directPages()
+    {
+        return $this->pages()->where('chapter_id', '=', '0');
+    }
+
+    /**
      * Get all chapters within this book.
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
@@ -92,10 +101,10 @@ class Book extends Entity
      * @param int $length
      * @return string
      */
-    public function getExcerpt($length = 100)
+    public function getExcerpt(int $length = 100)
     {
         $description = $this->description;
-        return strlen($description) > $length ? substr($description, 0, $length-3) . '...' : $description;
+        return mb_strlen($description) > $length ? mb_substr($description, 0, $length-3) . '...' : $description;
     }
 
     /**

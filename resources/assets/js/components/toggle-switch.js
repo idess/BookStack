@@ -3,17 +3,21 @@ class ToggleSwitch {
 
     constructor(elem) {
         this.elem = elem;
-        this.input = elem.querySelector('input');
+        this.input = elem.querySelector('input[type=hidden]');
+        this.checkbox = elem.querySelector('input[type=checkbox]');
 
-        this.elem.onclick = this.onClick.bind(this);
+        this.checkbox.addEventListener('change', this.stateChange.bind(this));
     }
 
-    onClick(event) {
-        let checked = this.input.value !== 'true';
-        this.input.value = checked ? 'true' : 'false';
-        checked ? this.elem.classList.add('active') : this.elem.classList.remove('active');
+    stateChange() {
+        this.input.value = (this.checkbox.checked ? 'true' : 'false');
+
+        // Dispatch change event from hidden input so they can be listened to
+        // like a normal checkbox.
+        const changeEvent = new Event('change');
+        this.input.dispatchEvent(changeEvent);
     }
 
 }
 
-module.exports = ToggleSwitch;
+export default ToggleSwitch;

@@ -1,10 +1,8 @@
 <?php
-
+/**
+ * Text shown in error messaging.
+ */
 return [
-
-    /**
-     * Error text strings.
-     */
 
     // Permissions
     'permission' => 'You do not have permission to access the requested page.',
@@ -29,6 +27,7 @@ return [
     'social_account_register_instructions' => 'If you do not yet have an account, You can register an account using the :socialAccount option.',
     'social_driver_not_found' => 'Social driver not found',
     'social_driver_not_configured' => 'Your :socialAccount social settings are not configured correctly.',
+    'invite_token_expired' => 'This invitation link has expired. You can instead try to reset your account password.',
 
     // System
     'path_not_writable' => 'File path :filePath could not be uploaded to. Ensure it is writable to the server.',
@@ -38,6 +37,7 @@ return [
     'uploaded'  => 'The server does not allow uploads of this size. Please try a smaller file size.',
     'image_upload_error' => 'An error occurred uploading the image',
     'image_upload_type_error' => 'The image type being uploaded is invalid',
+    'file_upload_timeout' => 'The file upload has timed out.',
 
     // Attachments
     'attachment_page_mismatch' => 'Page mismatch during attachment update',
@@ -65,6 +65,7 @@ return [
     'role_cannot_be_edited' => 'This role cannot be edited',
     'role_system_cannot_be_deleted' => 'This role is a system role and cannot be deleted',
     'role_registration_default_cannot_delete' => 'This role cannot be deleted while set as the default registration role',
+    'role_cannot_remove_only_admin' => 'This user is the only user assigned to the administrator role. Assign the administrator role to another user before attempting to remove it here.',
 
     // Comments
     'comment_list' => 'An error occurred while fetching the comments.',
@@ -80,4 +81,5 @@ return [
     'error_occurred' => 'An Error Occurred',
     'app_down' => ':appName is down right now',
     'back_soon' => 'It will be back up soon.',
+
 ];

@@ -37,11 +37,11 @@ class Authenticate
             }
         }
 
-        if ($this->auth->guest() && !setting('app-public')) {
+        if (!hasAppAccess()) {
             if ($request->ajax()) {
                 return response('Unauthorized.', 401);
             } else {
-                return redirect()->guest(baseUrl('/login'));
+                return redirect()->guest(url('/login'));
             }
         }
 

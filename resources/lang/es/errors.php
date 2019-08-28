@@ -1,10 +1,8 @@
 <?php
-
+/**
+ * Text shown in error messaging.
+ */
 return [
-
-    /**
-     * Error text strings.
-     */
 
     // Permissions
     'permission' => 'No tiene permisos para visualizar la página solicitada.',
@@ -38,6 +36,7 @@ return [
     'uploaded'  => 'El servidor no permite la subida de ficheros de este tamaño. Intente subir un fichero de menor tamaño.',
     'image_upload_error' => 'Ha ocurrido un error al subir la imagen',
     'image_upload_type_error' => 'El tipo de imagen que se quiere subir no es válido',
+    'file_upload_timeout' => 'La carga del archivo ha caducado.',
 
     // Attachments
     'attachment_page_mismatch' => 'Página no coincidente durante la subida del adjunto ',
@@ -65,6 +64,7 @@ return [
     'role_cannot_be_edited' => 'Este rol no puede ser editado',
     'role_system_cannot_be_deleted' => 'Este rol es un rol de sistema y no puede ser borrado',
     'role_registration_default_cannot_delete' => 'Este rol no puede ser borrado mientras sea el rol por defecto de nuevos registros',
+    'role_cannot_remove_only_admin' => 'Este usuario es el único usuario asignado al rol de administrador. Asigna primero este rol a otro usuario antes de eliminarlo.',
 
     // Comments
     'comment_list' => 'Se ha producido un error al buscar los comentarios.',
@@ -80,4 +80,5 @@ return [
     'error_occurred' => 'Ha ocurrido un error',
     'app_down' => 'La aplicación :appName se encuentra caída en este momento',
     'back_soon' => 'Volverá a estar operativa pronto.',
+
 ];

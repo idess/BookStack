@@ -26,7 +26,9 @@ class Bookshelf extends Entity
      */
     public function books()
     {
-        return $this->belongsToMany(Book::class, 'bookshelves_books', 'bookshelf_id', 'book_id')->orderBy('order', 'asc');
+        return $this->belongsToMany(Book::class, 'bookshelves_books', 'bookshelf_id', 'book_id')
+            ->withPivot('order')
+            ->orderBy('order', 'asc');
     }
 
     /**
@@ -37,9 +39,9 @@ class Bookshelf extends Entity
     public function getUrl($path = false)
     {
         if ($path !== false) {
-            return baseUrl('/shelves/' . urlencode($this->slug) . '/' . trim($path, '/'));
+            return url('/shelves/' . urlencode($this->slug) . '/' . trim($path, '/'));
         }
-        return baseUrl('/shelves/' . urlencode($this->slug));
+        return url('/shelves/' . urlencode($this->slug));
     }
 
     /**
@@ -50,13 +52,14 @@ class Bookshelf extends Entity
      */
     public function getBookCover($width = 440, $height = 250)
     {
-        $default = baseUrl('/book_default_cover.png');
+        // TODO - Make generic, focused on books right now, Perhaps set-up a better image
+        $default = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
         if (!$this->image_id) {
             return $default;
         }
 
         try {
-            $cover = $this->cover ? baseUrl($this->cover->getThumb($width, $height, false)) : $default;
+            $cover = $this->cover ? url($this->cover->getThumb($width, $height, false)) : $default;
         } catch (\Exception $err) {
             $cover = $default;
         }
@@ -64,7 +67,7 @@ class Bookshelf extends Entity
     }
 
     /**
-     * Get the cover image of the book
+     * Get the cover image of the shelf
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function cover()
@@ -77,10 +80,10 @@ class Bookshelf extends Entity
      * @param int $length
      * @return string
      */
-    public function getExcerpt($length = 100)
+    public function getExcerpt(int $length = 100)
     {
         $description = $this->description;
-        return strlen($description) > $length ? substr($description, 0, $length-3) . '...' : $description;
+        return mb_strlen($description) > $length ? mb_substr($description, 0, $length-3) . '...' : $description;
     }
 
     /**
@@ -90,5 +93,15 @@ class Bookshelf extends Entity
     public function entityRawQuery()
     {
         return "'BookStack\\\\BookShelf' as entity_type, id, id as entity_id, slug, name, {$this->textField} as text,'' as html, '0' as book_id, '0' as priority, '0' as chapter_id, '0' as draft, created_by, updated_by, updated_at, created_at";
+    }
+
+    /**
+     * Check if this shelf contains the given book.
+     * @param Book $book
+     * @return bool
+     */
+    public function contains(Book $book)
+    {
+        return $this->books()->where('id', '=', $book->id)->count() > 0;
     }
 }

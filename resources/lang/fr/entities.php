@@ -9,6 +9,7 @@ return [
     'recently_updated_pages' => 'Pages mises à jour récemment',
     'recently_created_chapters' => 'Chapitres créés récemment',
     'recently_created_books' => 'Livres créés récemment',
+    'recently_created_shelves' => 'Étagères créés récemment',
     'recently_update' => 'Mis à jour récemment',
     'recently_viewed' => 'Vus récemment',
     'recent_activity' => 'Activité récente',
@@ -52,17 +53,53 @@ return [
     'search_content_type' => 'Type de contenu',
     'search_exact_matches' => 'Correspondances exactes',
     'search_tags' => 'Recherche par tags',
+    'search_options' => 'Options',
     'search_viewed_by_me' => 'Vu par moi',
     'search_not_viewed_by_me' => 'Non vu par moi',
     'search_permissions_set' => 'Ensemble d\'autorisations',
     'search_created_by_me' => 'Créé par moi',
     'search_updated_by_me' => 'Mis à jour par moi',
+    'search_date_options' => 'Recherche par date',
     'search_updated_before' => 'Mis à jour avant',
     'search_updated_after' => 'Mis à jour après',
     'search_created_before' => 'Créé avant',
     'search_created_after' => 'Créé après',
     'search_set_date' => 'Choisir la date',
     'search_update' => 'Actualiser la recherche',
+
+    /**
+     * Shelves
+     */
+    'shelf' => 'Étagère',
+    'shelves' => 'Étagères',
+    'x_shelves' => ':count Étagère|:count Étagères',
+    'shelves_long' => 'Étagères',
+    'shelves_empty' => 'Aucune étagère n\'a été créée',
+    'shelves_create' => 'Créer une nouvelle étagère',
+    'shelves_popular' => 'Étagères populaires',
+    'shelves_new' => 'Nouvelles Étagères',
+    'shelves_new_action' => 'Nouvelle Étagère',
+    'shelves_popular_empty' => 'Les étagères les plus populaires apparaîtront ici.',
+    'shelves_new_empty' => 'Les étagères les plus récentes apparaitront ici.',
+    'shelves_save' => 'Enregistrer l\'étagère',
+    'shelves_books' => 'Livres sur cette étagère',
+    'shelves_add_books' => 'Ajouter des livres sur cette étagère',
+    'shelves_drag_books' => 'Déposez des livres ici pour les ajouter a cette étagère',
+    'shelves_empty_contents' => 'Aucun livre n\'a été assigné à cette étagère',
+    'shelves_edit_and_assign' => 'Modifier cette étagère pour y ajouter des livres',
+    'shelves_edit_named' => 'Modifier l\'étagère :name',
+    'shelves_edit' => 'Modifier l\'étagère',
+    'shelves_delete' => 'Supprimer l\'étagère',
+    'shelves_delete_named' => 'Supprimer l\'étagère :name',
+    'shelves_delete_explain' => "Ceci va supprimer l\'étagère nommée \':bookName\'. Les livres contenus dans cette étagère ne seront pas supprimés.",
+    'shelves_delete_confirmation' => 'Êtes-vous sûr(e) de vouloir supprimer cette étagère ?',
+    'shelves_permissions' => 'Permissions de l\'étagère',
+    'shelves_permissions_updated' => 'Permissions de l\'étagère mises à jour',
+    'shelves_permissions_active' => 'Permissions de l\'étagère activées',
+    'shelves_copy_permissions_to_books' => 'Copier les permissions vers les livres',
+    'shelves_copy_permissions' => 'Copier les permissions',
+    'shelves_copy_permissions_explain' => 'Ceci va appliquer les permissions actuelles de cette étagère à tous les livres qu\'elle contient. Avant de  continuer, assurez-vous que toutes les permissions de cette étagère ont été sauvegardées.',
+    'shelves_copy_permission_success' => 'Permissions de l\'étagère transférées à :count livres',
 
     /**
      * Books
@@ -74,6 +111,7 @@ return [
     'books_popular' => 'Livres populaires',
     'books_recent' => 'Livres récents',
     'books_new' => 'Nouveaux livres',
+    'books_new_action' => 'Nouveau livre',
     'books_popular_empty' => 'Les livres les plus populaires apparaîtront ici.',
     'books_new_empty' => 'Les livres les plus récents apparaitront ici.',
     'books_create' => 'Créer un nouveau livre',
@@ -97,6 +135,11 @@ return [
     'books_navigation' => 'Navigation dans le livre',
     'books_sort' => 'Trier les contenus du livre',
     'books_sort_named' => 'Trier le livre :bookName',
+    'books_sort_name' => 'Trier par le nom',
+    'books_sort_created' => 'Trier par la date de création',
+    'books_sort_updated' => 'Trier par la date de mise à jour',
+    'books_sort_chapters_first' => 'Les chapitres en premier',
+    'books_sort_chapters_last' => 'Les chapitres en dernier',
     'books_sort_show_other' => 'Afficher d\'autres livres',
     'books_sort_save' => 'Enregistrer l\'ordre',
 
@@ -199,6 +242,7 @@ return [
         'message' => ':start :time. Attention à ne pas écraser les mises à jour de quelqu\'un d\'autre !',
     ],
     'pages_draft_discarded' => 'Brouillon écarté, la page est dans sa version actuelle.',
+    'pages_specific' => 'Page Spécifique',
 
     /**
      * Editor sidebar
@@ -206,6 +250,7 @@ return [
     'page_tags' => 'Mots-clés de la page',
     'chapter_tags' => 'Mots-clés du chapitre',
     'book_tags' => 'Mots-clés du livre',
+    'shelf_tags' => 'Mots-clés de l\'étagère',
     'tag' => 'Mot-clé',
     'tags' =>  'Mots-clés',
     'tag_value' => 'Valeur du mot-clé (Optionnel)',
@@ -245,6 +290,7 @@ return [
     'profile_not_created_pages' => ':userName n\'a pas créé de page',
     'profile_not_created_chapters' => ':userName n\'a pas créé de chapitre',
     'profile_not_created_books' => ':userName n\'a pas créé de livre',
+    'profile_not_created_shelves' => ':userName n\'a pas créé d\'étagère',
 
     /**
      * Comments

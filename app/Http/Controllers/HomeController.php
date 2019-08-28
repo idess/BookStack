@@ -1,7 +1,7 @@
 <?php namespace BookStack\Http\Controllers;
 
 use Activity;
-use BookStack\Entities\EntityRepo;
+use BookStack\Entities\Repos\EntityRepo;
 use Illuminate\Http\Response;
 use Views;
 
@@ -18,7 +18,6 @@ class HomeController extends Controller
         $this->entityRepo = $entityRepo;
         parent::__construct();
     }
-
 
     /**
      * Display the homepage.
@@ -45,17 +44,39 @@ class HomeController extends Controller
             'draftPages' => $draftPages,
         ];
 
+        // Add required list ordering & sorting for books & shelves views.
+        if ($homepageOption === 'bookshelves' || $homepageOption === 'books') {
+            $key = $homepageOption;
+            $view = setting()->getUser($this->currentUser, $key . '_view_type', config('app.views.' . $key));
+            $sort = setting()->getUser($this->currentUser, $key . '_sort', 'name');
+            $order = setting()->getUser($this->currentUser, $key . '_sort_order', 'asc');
+
+            $sortOptions = [
+                'name' => trans('common.sort_name'),
+                'created_at' => trans('common.sort_created_at'),
+                'updated_at' => trans('common.sort_updated_at'),
+            ];
+
+            $commonData = array_merge($commonData, [
+                'view' => $view,
+                'sort' => $sort,
+                'order' => $order,
+                'sortOptions' => $sortOptions,
+            ]);
+        }
+
         if ($homepageOption === 'bookshelves') {
-            $shelves = $this->entityRepo->getAllPaginated('bookshelf', 18);
-            $shelvesViewType = setting()->getUser($this->currentUser, 'bookshelves_view_type', config('app.views.bookshelves', 'grid'));
-            $data = array_merge($commonData, ['shelves' => $shelves, 'shelvesViewType' => $shelvesViewType]);
+            $shelves = $this->entityRepo->getAllPaginated('bookshelf', 18, $commonData['sort'], $commonData['order']);
+            foreach ($shelves as $shelf) {
+                $shelf->books = $this->entityRepo->getBookshelfChildren($shelf);
+            }
+            $data = array_merge($commonData, ['shelves' => $shelves]);
             return view('common.home-shelves', $data);
         }
 
         if ($homepageOption === 'books') {
-            $books = $this->entityRepo->getAllPaginated('book', 18);
-            $booksViewType = setting()->getUser($this->currentUser, 'books_view_type', config('app.views.books', 'list'));
-            $data = array_merge($commonData, ['books' => $books, 'booksViewType' => $booksViewType]);
+            $books = $this->entityRepo->getAllPaginated('book', 18, $commonData['sort'], $commonData['order']);
+            $data = array_merge($commonData, ['books' => $books]);
             return view('common.home-book', $data);
         }
 
@@ -71,49 +92,12 @@ class HomeController extends Controller
     }
 
     /**
-     * Get a js representation of the current translations
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
-     * @throws \Exception
-     */
-    public function getTranslations()
-    {
-        $locale = app()->getLocale();
-        $cacheKey = 'GLOBAL_TRANSLATIONS_' . $locale;
-        if (cache()->has($cacheKey) && config('app.env') !== 'development') {
-            $resp = cache($cacheKey);
-        } else {
-            $translations = [
-                // Get only translations which might be used in JS
-                'common' => trans('common'),
-                'components' => trans('components'),
-                'entities' => trans('entities'),
-                'errors' => trans('errors')
-            ];
-            if ($locale !== 'en') {
-                $enTrans = [
-                    'common' => trans('common', [], 'en'),
-                    'components' => trans('components', [], 'en'),
-                    'entities' => trans('entities', [], 'en'),
-                    'errors' => trans('errors', [], 'en')
-                ];
-                $translations = array_replace_recursive($enTrans, $translations);
-            }
-            $resp = 'window.translations = ' . json_encode($translations);
-            cache()->put($cacheKey, $resp, 120);
-        }
-
-        return response($resp, 200, [
-            'Content-Type' => 'application/javascript'
-        ]);
-    }
-
-    /**
      * Get custom head HTML, Used in ajax calls to show in editor.
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function customHeadContent()
     {
-        return view('partials/custom-head-content');
+        return view('partials.custom-head-content');
     }
 
     /**
@@ -128,7 +112,7 @@ class HomeController extends Controller
             $allowRobots = $sitePublic;
         }
         return response()
-            ->view('common/robots', ['allowRobots' => $allowRobots])
+            ->view('common.robots', ['allowRobots' => $allowRobots])
             ->header('Content-Type', 'text/plain');
     }
 
@@ -137,6 +121,6 @@ class HomeController extends Controller
      */
     public function getNotFound()
     {
-        return response()->view('errors/404', [], 404);
+        return response()->view('errors.404', [], 404);
     }
 }

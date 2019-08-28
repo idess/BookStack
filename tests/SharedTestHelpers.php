@@ -5,11 +5,13 @@ use BookStack\Entities\Bookshelf;
 use BookStack\Entities\Chapter;
 use BookStack\Entities\Entity;
 use BookStack\Entities\Page;
-use BookStack\Entities\EntityRepo;
+use BookStack\Entities\Repos\EntityRepo;
 use BookStack\Auth\Permissions\PermissionsRepo;
 use BookStack\Auth\Role;
 use BookStack\Auth\Permissions\PermissionService;
+use BookStack\Entities\Repos\PageRepo;
 use BookStack\Settings\SettingService;
+use BookStack\Uploads\HttpFetcher;
 
 trait SharedTestHelpers
 {
@@ -78,7 +80,7 @@ trait SharedTestHelpers
      */
     protected function regenEntityPermissions(Entity $entity)
     {
-        $this->app[PermissionService::class]->buildJointPermissionsForEntity($entity);
+        app(PermissionService::class)->buildJointPermissionsForEntity($entity);
         $entity->load('jointPermissions');
     }
 
@@ -88,7 +90,7 @@ trait SharedTestHelpers
      * @return \BookStack\Entities\Bookshelf
      */
     public function newShelf($input = ['name' => 'test shelf', 'description' => 'My new test shelf']) {
-        return $this->app[EntityRepo::class]->createFromInput('bookshelf', $input, false);
+        return app(EntityRepo::class)->createFromInput('bookshelf', $input, false);
     }
 
     /**
@@ -97,7 +99,7 @@ trait SharedTestHelpers
      * @return Book
      */
     public function newBook($input = ['name' => 'test book', 'description' => 'My new test book']) {
-        return $this->app[EntityRepo::class]->createFromInput('book', $input, false);
+        return app(EntityRepo::class)->createFromInput('book', $input, false);
     }
 
     /**
@@ -107,7 +109,7 @@ trait SharedTestHelpers
      * @return \BookStack\Entities\Chapter
      */
     public function newChapter($input = ['name' => 'test chapter', 'description' => 'My new test chapter'], Book $book) {
-        return $this->app[EntityRepo::class]->createFromInput('chapter', $input, $book);
+        return app(EntityRepo::class)->createFromInput('chapter', $input, $book);
     }
 
     /**
@@ -117,9 +119,9 @@ trait SharedTestHelpers
      */
     public function newPage($input = ['name' => 'test page', 'html' => 'My new test page']) {
         $book = Book::first();
-        $entityRepo = $this->app[EntityRepo::class];
-        $draftPage = $entityRepo->getDraftPage($book);
-        return $entityRepo->publishPageDraft($draftPage, $input);
+        $pageRepo = app(PageRepo::class);
+        $draftPage = $pageRepo->getDraftPage($book);
+        return $pageRepo->publishPageDraft($draftPage, $input);
     }
 
     /**
@@ -186,6 +188,20 @@ trait SharedTestHelpers
         $roleData = factory(Role::class)->make()->toArray();
         $roleData['permissions'] = array_flip($permissions);
         return $permissionRepo->saveNewRole($roleData);
+    }
+
+    /**
+     * Mock the HttpFetcher service and return the given data on fetch.
+     * @param $returnData
+     * @param int $times
+     */
+    protected function mockHttpFetch($returnData, int $times = 1)
+    {
+        $mockHttp = \Mockery::mock(HttpFetcher::class);
+        $this->app[HttpFetcher::class] = $mockHttp;
+        $mockHttp->shouldReceive('fetch')
+            ->times($times)
+            ->andReturn($returnData);
     }
 
 }

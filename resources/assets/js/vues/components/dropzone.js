@@ -1,36 +1,43 @@
-const DropZone = require("dropzone");
+import DropZone from "dropzone";
+import { fadeOut } from "../../services/animations";
 
 const template = `
-    <div class="dropzone-container">
-        <div class="dz-message">{{placeholder}}</div>
+    <div class="dropzone-container text-center">
+        <button type="button" class="dz-message">{{placeholder}}</button>
     </div>
 `;
 
 const props = ['placeholder', 'uploadUrl', 'uploadedTo'];
 
-// TODO - Remove jQuery usage
 function mounted() {
-   let container = this.$el;
-   let _this = this;
+   const container = this.$el;
+   const _this = this;
    this._dz = new DropZone(container, {
-	addRemoveLinks: true,
-	dictRemoveFile: trans('components.image_upload_remove'),
+        addRemoveLinks: true,
+        dictRemoveFile: trans('components.image_upload_remove'),
+        timeout: Number(window.uploadTimeout) || 60000,
+        maxFilesize: Number(window.uploadLimit) || 256,
         url: function() {
             return _this.uploadUrl;
         },
         init: function () {
-            let dz = this;
+            const dz = this;
 
             dz.on('sending', function (file, xhr, data) {
-                let token = window.document.querySelector('meta[name=token]').getAttribute('content');
+                const token = window.document.querySelector('meta[name=token]').getAttribute('content');
                 data.append('_token', token);
-                let uploadedTo = typeof _this.uploadedTo === 'undefined' ? 0 : _this.uploadedTo;
+                const uploadedTo = typeof _this.uploadedTo === 'undefined' ? 0 : _this.uploadedTo;
                 data.append('uploaded_to', uploadedTo);
+
+                xhr.ontimeout = function (e) {
+                    dz.emit('complete', file);
+                    dz.emit('error', file, trans('errors.file_upload_timeout'));
+                }
             });
 
             dz.on('success', function (file, data) {
                 _this.$emit('success', {file, data});
-                $(file.previewElement).fadeOut(400, function () {
+                fadeOut(file.previewElement, 800, () => {
                     dz.removeFile(file);
                 });
             });
@@ -39,11 +46,15 @@ function mounted() {
                 _this.$emit('error', {file, errorMessage, xhr});
 
                 function setMessage(message) {
-                    $(file.previewElement).find('[data-dz-errormessage]').text(message);
+                    const messsageEl = file.previewElement.querySelector('[data-dz-errormessage]');
+                    messsageEl.textContent = message;
                 }
 
-                if (xhr && xhr.status === 413) setMessage(trans('errors.server_upload_limit'));
-                else if (errorMessage.file) setMessage(errorMessage.file);
+                if (xhr && xhr.status === 413) {
+                    setMessage(trans('errors.server_upload_limit'))
+                } else if (errorMessage.file) {
+                    setMessage(errorMessage.file);
+                }
 
             });
         }
@@ -60,7 +71,7 @@ const methods = {
     }
 };
 
-module.exports = {
+export default {
     template,
     props,
     mounted,

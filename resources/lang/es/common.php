@@ -1,31 +1,30 @@
 <?php
+/**
+ * Common elements found throughout many areas of BookStack.
+ */
 return [
 
-    /**
-     * Buttons
-     */
+    // Buttons
     'cancel' => 'Cancelar',
     'confirm' => 'Confirmar',
     'back' => 'Atrás',
     'save' => 'Guardar',
     'continue' => 'Continuar',
     'select' => 'Seleccionar',
+    'toggle_all' => 'Marcarlos todos',
     'more' => 'Más',
 
-    /**
-     * Form Labels
-     */
+    // Form Labels
     'name' => 'Nombre',
     'description' => 'Descripción',
     'role' => 'Rol',
     'cover_image' => 'Imagen de portada',
     'cover_image_description' => 'Esta imagen debe ser aproximadamente de 440x250px.',
 
-    /**
-     * Actions
-     */
+    // Actions
     'actions' => 'Acciones',
     'view' => 'Ver',
+    'view_all' => 'Ver todos',
     'create' => 'Crear',
     'update' => 'Actualizar',
     'edit' => 'Editar',
@@ -40,9 +39,12 @@ return [
     'remove' => 'Remover',
     'add' => 'Añadir',
 
-    /**
-     * Misc
-     */
+    // Sort Options
+    'sort_name' => 'Nombre',
+    'sort_created_at' => 'Fecha de Creación',
+    'sort_updated_at' => 'Fecha de Modificación',
+
+    // Misc
     'deleted_user' => 'Usuario borrado',
     'no_activity' => 'Ninguna actividad para mostrar',
     'no_items' => 'No hay elementos disponibles',
@@ -54,15 +56,15 @@ return [
     'list_view' => 'Vista en Lista',
     'default' => 'Predeterminada',
 
-    /**
-     * Header
-     */
+    // Header
     'view_profile' => 'Ver Perfil',
     'edit_profile' => 'Editar Perfil',
 
-    /**
-     * Email Content
-     */
+    // Layout tabs
+    'tab_info' => 'Información',
+    'tab_content' => 'Contenido',
+
+    // Email Content
     'email_action_help' => 'Si está teniendo problemas clicando en el botón ":actionText", copie y pegue la siguiente URL en su navegador web:',
     'email_rights' => 'Todos los derechos reservados',
 ];

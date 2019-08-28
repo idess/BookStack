@@ -31,8 +31,11 @@
         <env name="MAIL_DRIVER" value="log"/>
         <env name="AUTH_METHOD" value="standard"/>
         <env name="DISABLE_EXTERNAL_SERVICES" value="true"/>
+        <env name="AVATAR_URL" value=""/>
         <env name="LDAP_VERSION" value="3"/>
         <env name="STORAGE_TYPE" value="local"/>
+        <env name="STORAGE_ATTACHMENT_TYPE" value="local"/>
+        <env name="STORAGE_IMAGE_TYPE" value="local"/>
         <env name="GITHUB_APP_ID" value="aaaaaaaaaaaaaa"/>
         <env name="GITHUB_APP_SECRET" value="aaaaaaaaaaaaaa"/>
         <env name="GITHUB_AUTO_REGISTER" value=""/>
@@ -41,6 +44,8 @@
         <env name="GOOGLE_APP_SECRET" value="aaaaaaaaaaaaaa"/>
         <env name="GOOGLE_AUTO_REGISTER" value=""/>
         <env name="GOOGLE_AUTO_CONFIRM_EMAIL" value=""/>
+        <env name="GOOGLE_SELECT_ACCOUNT" value=""/>
         <env name="APP_URL" value="http://bookstack.dev"/>
+        <env name="DEBUGBAR_ENABLED" value="false"/>
     </php>
 </phpunit>

@@ -3,8 +3,9 @@
 use BookStack\Entities\Book;
 use BookStack\Entities\Chapter;
 use BookStack\Entities\Page;
-use BookStack\Entities\EntityRepo;
+use BookStack\Entities\Repos\EntityRepo;
 use BookStack\Auth\UserRepo;
+use BookStack\Entities\Repos\PageRepo;
 use Carbon\Carbon;
 
 class EntityTest extends BrowserKitTest
@@ -64,9 +65,7 @@ class EntityTest extends BrowserKitTest
             ->click('Sort')
             ->seePageIs($bookToSort->getUrl() . '/sort')
             ->seeStatusCode(200)
-            ->see($bookToSort->name)
-            // Ensure page shows other books
-            ->see($books[1]->name);
+            ->see($bookToSort->name);
     }
 
     public function test_book_sort_item_returns_book_content()
@@ -193,7 +192,7 @@ class EntityTest extends BrowserKitTest
         $entities = $this->createEntityChainBelongingToUser($creator, $updater);
         $this->actingAs($creator);
         app(UserRepo::class)->destroy($creator);
-        app(EntityRepo::class)->savePageRevision($entities['page']);
+        app(PageRepo::class)->savePageRevision($entities['page']);
 
         $this->checkEntitiesViewable($entities);
     }
@@ -206,7 +205,7 @@ class EntityTest extends BrowserKitTest
         $entities = $this->createEntityChainBelongingToUser($creator, $updater);
         $this->actingAs($updater);
         app(UserRepo::class)->destroy($updater);
-        app(EntityRepo::class)->savePageRevision($entities['page']);
+        app(PageRepo::class)->savePageRevision($entities['page']);
 
         $this->checkEntitiesViewable($entities);
     }
@@ -221,15 +220,6 @@ class EntityTest extends BrowserKitTest
         // Check revision listing shows no errors.
         $this->visit($entities['page']->getUrl())
             ->click('Revisions')->seeStatusCode(200);
-    }
-
-    public function test_recently_created_pages_view()
-    {
-        $user = $this->getEditor();
-        $content = $this->createEntityChainBelongingToUser($user);
-
-        $this->asAdmin()->visit('/pages/recently-created')
-            ->seeInNthElement('.entity-list .page', 0, $content['page']->name);
     }
 
     public function test_recently_updated_pages_view()

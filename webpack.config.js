@@ -1,8 +1,7 @@
 const path = require('path');
 const dev = process.env.NODE_ENV !== 'production';
 
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 const config = {
     target: 'web',
@@ -20,56 +19,34 @@ const config = {
     module: {
         rules: [
             {
-                test: /\.js$/,
-                exclude: /(node_modules)/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: [[
-                            '@babel/preset-env', {
-                                useBuiltIns: 'usage'
-                            }
-                        ]]
-                    }
-                }
-            },
-            {
                 test: /\.scss$/,
-                use: ExtractTextPlugin.extract({
-                    fallback: "style-loader",
-                    use: [{
+                use: [
+                    {
+                        loader: MiniCssExtractPlugin.loader,
+                        options: {}
+                    },
+                    {
                         loader: "css-loader", options: {
-                            sourceMap: dev
-                        }
-                    }, {
-                        loader: 'postcss-loader',
-                        options: {
-                            ident: 'postcss',
-                            sourceMap: dev,
-                            plugins: (loader) => [
-                                require('autoprefixer')(),
-                            ]
-                        }
+                        sourceMap: dev
+                    }
                     }, {
                         loader: "sass-loader", options: {
                             sourceMap: dev
                         }
-                    }]
-                })
+                    }
+                ]
             }
         ]
     },
     plugins: [
-        new ExtractTextPlugin("[name].css"),
+        new MiniCssExtractPlugin({
+            filename: "[name].css",
+        }),
     ]
 };
 
 if (dev) {
     config['devtool'] = 'inline-source-map';
-}
-
-if (!dev) {
-    config.plugins.push(new UglifyJsPlugin());
 }
 
 module.exports = config;

@@ -96,21 +96,10 @@ class Page extends Entity
         $idComponent = $this->draft ? $this->id : urlencode($this->slug);
 
         if ($path !== false) {
-            return baseUrl('/books/' . urlencode($bookSlug) . $midText . $idComponent . '/' . trim($path, '/'));
+            return url('/books/' . urlencode($bookSlug) . $midText . $idComponent . '/' . trim($path, '/'));
         }
 
-        return baseUrl('/books/' . urlencode($bookSlug) . $midText . $idComponent);
-    }
-
-    /**
-     * Get an excerpt of this page's content to the specified length.
-     * @param int $length
-     * @return mixed
-     */
-    public function getExcerpt($length = 100)
-    {
-        $text = strlen($this->text) > $length ? substr($this->text, 0, $length-3) . '...' : $this->text;
-        return mb_convert_encoding($text, 'UTF-8');
+        return url('/books/' . urlencode($bookSlug) . $midText . $idComponent);
     }
 
     /**

@@ -1,18 +1,25 @@
-const MarkdownIt = require("markdown-it");
-const mdTasksLists = require('markdown-it-task-lists');
-const code = require('../services/code');
+import MarkdownIt from "markdown-it";
+import mdTasksLists from 'markdown-it-task-lists';
+import code from '../services/code';
+import {debounce} from "../services/util";
 
-const DrawIO = require('../services/drawio');
+import DrawIO from "../services/drawio";
 
 class MarkdownEditor {
 
     constructor(elem) {
         this.elem = elem;
-        this.textDirection = document.getElementById('page-editor').getAttribute('text-direction');
+
+        const pageEditor = document.getElementById('page-editor');
+        this.pageId = pageEditor.getAttribute('page-id');
+        this.textDirection = pageEditor.getAttribute('text-direction');
+
         this.markdown = new MarkdownIt({html: true});
         this.markdown.use(mdTasksLists, {label: true});
 
         this.display = this.elem.querySelector('.markdown-display');
+        this.displayDoc = this.display.contentDocument;
+        this.displayStylesLoaded = false;
         this.input = this.elem.querySelector('textarea');
         this.htmlInput = this.elem.querySelector('input[name=html]');
         this.cm = code.markdownEditor(this.input);
@@ -33,7 +40,7 @@ class MarkdownEditor {
         let lastClick = 0;
 
         // Prevent markdown display link click redirect
-        this.display.addEventListener('click', event => {
+        this.displayDoc.addEventListener('click', event => {
             let isDblClick = Date.now() - lastClick < 300;
 
             let link = event.target.closest('a');
@@ -60,11 +67,24 @@ class MarkdownEditor {
             let action = button.getAttribute('data-action');
             if (action === 'insertImage') this.actionInsertImage();
             if (action === 'insertLink') this.actionShowLinkSelector();
-            if (action === 'insertDrawing' && event.ctrlKey) {
+            if (action === 'insertDrawing' && (event.ctrlKey || event.metaKey)) {
                 this.actionShowImageManager();
                 return;
             }
             if (action === 'insertDrawing') this.actionStartDrawing();
+        });
+
+        // Mobile section toggling
+        this.elem.addEventListener('click', event => {
+            const toolbarLabel = event.target.closest('.editor-toolbar-label');
+            if (!toolbarLabel) return;
+
+            const currentActiveSections = this.elem.querySelectorAll('.markdown-editor-wrap');
+            for (let activeElem of currentActiveSections) {
+                activeElem.classList.remove('active');
+            }
+
+            toolbarLabel.closest('.markdown-editor-wrap').classList.add('active');
         });
 
         window.$events.listen('editor-markdown-update', value => {
@@ -73,32 +93,52 @@ class MarkdownEditor {
         });
 
         this.codeMirrorSetup();
+        this.listenForBookStackEditorEvents();
     }
 
     // Update the input content and render the display.
     updateAndRender() {
-        let content = this.cm.getValue();
+        const content = this.cm.getValue();
         this.input.value = content;
-        let html = this.markdown.render(content);
+        const html = this.markdown.render(content);
         window.$events.emit('editor-html-change', html);
         window.$events.emit('editor-markdown-change', content);
-        this.display.innerHTML = html;
+
+        // Set body content
+        this.displayDoc.body.className = 'page-content';
+        this.displayDoc.body.innerHTML = html;
         this.htmlInput.value = html;
+
+        // Copy styles from page head and set custom styles for editor
+        this.loadStylesIntoDisplay();
+    }
+
+    loadStylesIntoDisplay() {
+        if (this.displayStylesLoaded) return;
+        this.displayDoc.documentElement.className = 'markdown-editor-display';
+
+        this.displayDoc.head.innerHTML = '';
+        const styles = document.head.querySelectorAll('style,link[rel=stylesheet]');
+        for (let style of styles) {
+            const copy = style.cloneNode(true);
+            this.displayDoc.head.appendChild(copy);
+        }
+
+        this.displayStylesLoaded = true;
     }
 
     onMarkdownScroll(lineCount) {
-        let elems = this.display.children;
+        const elems = this.displayDoc.body.children;
         if (elems.length <= lineCount) return;
 
-        let topElem = (lineCount === -1) ? elems[elems.length-1] : elems[lineCount];
-        // TODO - Replace jQuery
-        $(this.display).animate({
-            scrollTop: topElem.offsetTop
-        }, {queue: false, duration: 200, easing: 'linear'});
+        const topElem = (lineCount === -1) ? elems[elems.length-1] : elems[lineCount];
+        topElem.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth'});
     }
 
     codeMirrorSetup() {
-        let cm = this.cm;
+        const cm = this.cm;
+        const context = this;
+
         // Text direction
         // cm.setOption('direction', this.textDirection);
         cm.setOption('direction', 'ltr'); // Will force to remain as ltr for now due to issues when HTML is in editor.
@@ -141,8 +181,7 @@ class MarkdownEditor {
             this.updateAndRender();
         });
 
-        // Handle scroll to sync display view
-        cm.on('scroll', instance => {
+        const onScrollDebounced = debounce((instance) => {
             // Thanks to http://liuhao.im/english/2015/11/10/the-sync-scroll-of-markdown-editor-in-javascript.html
             let scroll = instance.getScrollInfo();
             let atEnd = scroll.top + scroll.clientHeight === scroll.height;
@@ -157,26 +196,56 @@ class MarkdownEditor {
             let doc = parser.parseFromString(this.markdown.render(range), 'text/html');
             let totalLines = doc.documentElement.querySelectorAll('body > *');
             this.onMarkdownScroll(totalLines.length);
+        }, 100);
+
+        // Handle scroll to sync display view
+        cm.on('scroll', instance => {
+            onScrollDebounced(instance);
         });
 
         // Handle image paste
         cm.on('paste', (cm, event) => {
-            if (!event.clipboardData || !event.clipboardData.items) return;
-            for (let i = 0; i < event.clipboardData.items.length; i++) {
-                uploadImage(event.clipboardData.items[i].getAsFile());
+            const clipboardItems = event.clipboardData.items;
+            if (!event.clipboardData || !clipboardItems) return;
+
+            // Don't handle if clipboard includes text content
+            for (let clipboardItem of clipboardItems) {
+                if (clipboardItem.type.includes('text/')) {
+                    return;
+                }
+            }
+
+            for (let clipboardItem of clipboardItems) {
+                if (clipboardItem.type.includes("image")) {
+                    uploadImage(clipboardItem.getAsFile());
+                }
             }
         });
 
-        // Handle images on drag-drop
+        // Handle image & content drag n drop
         cm.on('drop', (cm, event) => {
-            event.stopPropagation();
-            event.preventDefault();
-            let cursorPos = cm.coordsChar({left: event.pageX, top: event.pageY});
-            cm.setCursor(cursorPos);
-            if (!event.dataTransfer || !event.dataTransfer.files) return;
-            for (let i = 0; i < event.dataTransfer.files.length; i++) {
-                uploadImage(event.dataTransfer.files[i]);
+
+            const templateId = event.dataTransfer.getData('bookstack/template');
+            if (templateId) {
+                const cursorPos = cm.coordsChar({left: event.pageX, top: event.pageY});
+                cm.setCursor(cursorPos);
+                event.preventDefault();
+                window.$http.get(`/templates/${templateId}`).then(resp => {
+                    const content = resp.data.markdown || resp.data.html;
+                    cm.replaceSelection(content);
+                });
             }
+
+            if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+                const cursorPos = cm.coordsChar({left: event.pageX, top: event.pageY});
+                cm.setCursor(cursorPos);
+                event.stopPropagation();
+                event.preventDefault();
+                for (let i = 0; i < event.dataTransfer.files.length; i++) {
+                    uploadImage(event.dataTransfer.files[i]);
+                }
+            }
+
         });
 
         // Helper to replace editor content
@@ -266,20 +335,22 @@ class MarkdownEditor {
             }
 
             // Insert image into markdown
-            let id = "image-" + Math.random().toString(16).slice(2);
-            let placeholderImage = window.baseUrl(`/loading.gif#upload${id}`);
-            let selectedText = cm.getSelection();
-            let placeHolderText = `![${selectedText}](${placeholderImage})`;
-            let cursor = cm.getCursor();
+            const id = "image-" + Math.random().toString(16).slice(2);
+            const placeholderImage = window.baseUrl(`/loading.gif#upload${id}`);
+            const selectedText = cm.getSelection();
+            const placeHolderText = `![${selectedText}](${placeholderImage})`;
+            const cursor = cm.getCursor();
             cm.replaceSelection(placeHolderText);
-            cm.setCursor({line: cursor.line, ch: cursor.ch + selectedText.length + 2});
+            cm.setCursor({line: cursor.line, ch: cursor.ch + selectedText.length + 3});
 
-            let remoteFilename = "image-" + Date.now() + "." + ext;
-            let formData = new FormData();
+            const remoteFilename = "image-" + Date.now() + "." + ext;
+            const formData = new FormData();
             formData.append('file', file, remoteFilename);
+            formData.append('uploaded_to', context.pageId);
 
-            window.$http.post('/images/gallery/upload', formData).then(resp => {
-                replaceContent(placeholderImage, resp.data.thumbs.display);
+            window.$http.post('/images/gallery', formData).then(resp => {
+                const newContent = `[![${selectedText}](${resp.data.thumbs.display})](${resp.data.url})`;
+                replaceContent(placeHolderText, newContent);
             }).catch(err => {
                 window.$events.emit('error', trans('errors.image_upload_error'));
                 replaceContent(placeHolderText, selectedText);
@@ -301,10 +372,10 @@ class MarkdownEditor {
     }
 
     actionInsertImage() {
-        let cursorPos = this.cm.getCursor('from');
+        const cursorPos = this.cm.getCursor('from');
         window.ImageManager.show(image => {
             let selectedText = this.cm.getSelection();
-            let newText = "![" + (selectedText || image.name) + "](" + image.thumbs.display + ")";
+            let newText = "[![" + (selectedText || image.name) + "](" + image.thumbs.display + ")](" + image.url + ")";
             this.cm.focus();
             this.cm.replaceSelection(newText);
             this.cm.setCursor(cursorPos.line, cursorPos.ch + newText.length);
@@ -312,7 +383,7 @@ class MarkdownEditor {
     }
 
     actionShowImageManager() {
-        let cursorPos = this.cm.getCursor('from');
+        const cursorPos = this.cm.getCursor('from');
         window.ImageManager.show(image => {
             this.insertDrawing(image, cursorPos);
         }, 'drawio');
@@ -320,7 +391,7 @@ class MarkdownEditor {
 
     // Show the popup link selector and insert a link when finished
     actionShowLinkSelector() {
-        let cursorPos = this.cm.getCursor('from');
+        const cursorPos = this.cm.getCursor('from');
         window.EntitySelectorPopup.show(entity => {
             let selectedText = this.cm.getSelection() || entity.name;
             let newText = `[${selectedText}](${entity.link})`;
@@ -345,7 +416,7 @@ class MarkdownEditor {
                 uploaded_to: Number(document.getElementById('page-editor').getAttribute('page-id'))
             };
 
-            window.$http.post(window.baseUrl('/images/drawing/upload'), data).then(resp => {
+            window.$http.post(window.baseUrl('/images/drawio'), data).then(resp => {
                 this.insertDrawing(resp.data, cursorPos);
                 DrawIO.close();
             }).catch(err => {
@@ -356,7 +427,7 @@ class MarkdownEditor {
     }
 
     insertDrawing(image, originalCursor) {
-        let newText = `<div drawio-diagram="${image.id}"><img src="${image.url}"></div>`;
+        const newText = `<div drawio-diagram="${image.id}"><img src="${image.url}"></div>`;
         this.cm.focus();
         this.cm.replaceSelection(newText);
         this.cm.setCursor(originalCursor.line, originalCursor.ch + newText.length);
@@ -364,14 +435,16 @@ class MarkdownEditor {
 
     // Show draw.io if enabled and handle save.
     actionEditDrawing(imgContainer) {
-        if (document.querySelector('[drawio-enabled]').getAttribute('drawio-enabled') !== 'true') return;
-        let cursorPos = this.cm.getCursor('from');
-        let drawingId = imgContainer.getAttribute('drawio-diagram');
+        const drawingDisabled = document.querySelector('[drawio-enabled]').getAttribute('drawio-enabled') !== 'true';
+        if (drawingDisabled) {
+            return;
+        }
+
+        const cursorPos = this.cm.getCursor('from');
+        const drawingId = imgContainer.getAttribute('drawio-diagram');
 
         DrawIO.show(() => {
-            return window.$http.get(window.baseUrl(`/images/base64/${drawingId}`)).then(resp => {
-                return `data:image/png;base64,${resp.data.content}`;
-            });
+            return DrawIO.load(drawingId);
         }, (pngData) => {
 
             let data = {
@@ -379,7 +452,7 @@ class MarkdownEditor {
                 uploaded_to: Number(document.getElementById('page-editor').getAttribute('page-id'))
             };
 
-            window.$http.post(window.baseUrl(`/images/drawing/upload`), data).then(resp => {
+            window.$http.post(window.baseUrl(`/images/drawio`), data).then(resp => {
                 let newText = `<div drawio-diagram="${resp.data.id}"><img src="${resp.data.url}"></div>`;
                 let newContent = this.cm.getValue().split('\n').map(line => {
                     if (line.indexOf(`drawio-diagram="${drawingId}"`) !== -1) {
@@ -425,6 +498,37 @@ class MarkdownEditor {
         })
     }
 
+    listenForBookStackEditorEvents() {
+
+        function getContentToInsert({html, markdown}) {
+            return markdown || html;
+        }
+
+        // Replace editor content
+        window.$events.listen('editor::replace', (eventContent) => {
+            const markdown = getContentToInsert(eventContent);
+            this.cm.setValue(markdown);
+        });
+
+        // Append editor content
+        window.$events.listen('editor::append', (eventContent) => {
+            const cursorPos = this.cm.getCursor('from');
+            const markdown = getContentToInsert(eventContent);
+            const content = this.cm.getValue() + '\n' + markdown;
+            this.cm.setValue(content);
+            this.cm.setCursor(cursorPos.line, cursorPos.ch);
+        });
+
+        // Prepend editor content
+        window.$events.listen('editor::prepend', (eventContent) => {
+            const cursorPos = this.cm.getCursor('from');
+            const markdown = getContentToInsert(eventContent);
+            const content = markdown + '\n' + this.cm.getValue();
+            this.cm.setValue(content);
+            const prependLineCount = markdown.split('\n').length;
+            this.cm.setCursor(cursorPos.line + prependLineCount, cursorPos.ch);
+        });
+    }
 }
 
-module.exports = MarkdownEditor ;
+export default MarkdownEditor ;
