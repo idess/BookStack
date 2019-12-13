@@ -7,9 +7,10 @@
             <div class="py-m">
                 @include('settings.navbar', ['selected' => 'settings'])
             </div>
-            <div class="text-right mb-l px-m">
-                <br>
-                BookStack @if(strpos($version, 'v') !== 0) version @endif {{ $version }}
+            <div class="text-right p-m">
+                <a target="_blank" rel="noopener noreferrer" href="https://github.com/BookStackApp/BookStack/releases">
+                    BookStack @if(strpos($version, 'v') !== 0) version @endif {{ $version }}
+                </a>
             </div>
         </div>
 
@@ -129,16 +130,38 @@
                         </div>
                     </div>
 
+                    <!-- Primary Color -->
                     <div class="grid half gap-xl">
                         <div>
                             <label class="setting-list-label">{{ trans('settings.app_primary_color') }}</label>
                             <p class="small">{!! trans('settings.app_primary_color_desc') !!}</p>
                         </div>
                         <div setting-app-color-picker class="text-m-right">
-                            <input type="color" value="{{ setting('app-color') }}" name="setting-app-color" id="setting-app-color" placeholder="#206ea7">
+                            <input type="color" data-default="#206ea7" data-current="{{ setting('app-color') }}" value="{{ setting('app-color') }}" name="setting-app-color" id="setting-app-color" placeholder="#206ea7">
                             <input type="hidden" value="{{ setting('app-color-light') }}" name="setting-app-color-light" id="setting-app-color-light">
                             <br>
+                            <button type="button" class="text-button text-muted mt-s mx-s" setting-app-color-picker-default>{{ trans('common.default') }}</button>
+                            <span class="sep">|</span>
                             <button type="button" class="text-button text-muted mt-s mx-s" setting-app-color-picker-reset>{{ trans('common.reset') }}</button>
+                        </div>
+                    </div>
+
+                    <!-- Entity Color -->
+                    <div class="pb-l">
+                        <div>
+                            <label class="setting-list-label">{{ trans('settings.content_colors') }}</label>
+                            <p class="small">{!! trans('settings.content_colors_desc') !!}</p>
+                        </div>
+                        <div class="grid half pt-m">
+                            <div>
+                                @include('components.setting-entity-color-picker', ['type' => 'bookshelf'])
+                                @include('components.setting-entity-color-picker', ['type' => 'book'])
+                                @include('components.setting-entity-color-picker', ['type' => 'chapter'])
+                            </div>
+                            <div>
+                                @include('components.setting-entity-color-picker', ['type' => 'page'])
+                                @include('components.setting-entity-color-picker', ['type' => 'page-draft'])
+                            </div>
                         </div>
                     </div>
 

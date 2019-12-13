@@ -54,15 +54,15 @@ class UserInviteController extends Controller
 
     /**
      * Sets the password for an invited user and then grants them access.
-     * @param string $token
      * @param Request $request
+     * @param string $token
      * @return RedirectResponse|Redirector
      * @throws Exception
      */
-    public function setPassword(string $token, Request $request)
+    public function setPassword(Request $request, string $token)
     {
         $this->validate($request, [
-            'password' => 'required|min:6'
+            'password' => 'required|min:8'
         ]);
 
         try {
@@ -77,7 +77,7 @@ class UserInviteController extends Controller
         $user->save();
 
         auth()->login($user);
-        session()->flash('success', trans('auth.user_invite_success', ['appName' => setting('app-name')]));
+        $this->showSuccessNotification(trans('auth.user_invite_success', ['appName' => setting('app-name')]));
         $this->inviteService->deleteByUser($user);
 
         return redirect('/');
@@ -96,11 +96,10 @@ class UserInviteController extends Controller
         }
 
         if ($exception instanceof UserTokenExpiredException) {
-            session()->flash('error', trans('errors.invite_token_expired'));
+            $this->showErrorNotification(trans('errors.invite_token_expired'));
             return redirect('/password/email');
         }
 
         throw $exception;
     }
-
 }

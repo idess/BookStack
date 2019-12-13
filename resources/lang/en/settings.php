@@ -33,13 +33,22 @@ return [
     'app_logo' => 'Application Logo',
     'app_logo_desc' => 'This image should be 43px in height. <br>Large images will be scaled down.',
     'app_primary_color' => 'Application Primary Color',
-    'app_primary_color_desc' => 'This should be a hex value. <br>Leave empty to reset to the default color.',
+    'app_primary_color_desc' => 'Sets the primary color for the application including the banner, buttons, and links.',
     'app_homepage' => 'Application Homepage',
     'app_homepage_desc' => 'Select a view to show on the homepage instead of the default view. Page permissions are ignored for selected pages.',
     'app_homepage_select' => 'Select a page',
     'app_disable_comments' => 'Disable Comments',
     'app_disable_comments_toggle' => 'Disable comments',
     'app_disable_comments_desc' => 'Disables comments across all pages in the application. <br> Existing comments are not shown.',
+
+    // Color settings
+    'content_colors' => 'Content Colors',
+    'content_colors_desc' => 'Sets colors for all elements in the page organisation hierarchy. Choosing colors with a similar brightness to the default colors is recommended for readability.',
+    'bookshelf_color' => 'Shelf Color',
+    'book_color' => 'Book Color',
+    'chapter_color' => 'Chapter Color',
+    'page_color' => 'Page Color',
+    'page_draft_color' => 'Page Draft Color',
 
     // Registration Settings
     'reg_settings' => 'Registration',
@@ -63,6 +72,13 @@ return [
     'maint_image_cleanup_warning' => ':count potentially unused images were found. Are you sure you want to delete these images?',
     'maint_image_cleanup_success' => ':count potentially unused images found and deleted!',
     'maint_image_cleanup_nothing_found' => 'No unused images found, Nothing deleted!',
+    'maint_send_test_email' => 'Send a Test Email',
+    'maint_send_test_email_desc' => 'This sends a test email to your email address specified in your profile.',
+    'maint_send_test_email_run' => 'Send test email',
+    'maint_send_test_email_success' => 'Email sent to :address',
+    'maint_send_test_email_mail_subject' => 'Test Email',
+    'maint_send_test_email_mail_greeting' => 'Email delivery seems to work!',
+    'maint_send_test_email_mail_text' => 'Congratulations! As you received this email notification, your email settings seem to be configured properly.',
 
     // Role Settings
     'roles' => 'Roles',
@@ -135,9 +151,8 @@ return [
     'users_social_connected' => ':socialAccount account was successfully attached to your profile.',
     'users_social_disconnected' => ':socialAccount account was successfully disconnected from your profile.',
 
-    //! Since these labels are already localized this array does not need to be
-    //! translated in the language-specific files.
-    //! DELETE BELOW IF COPIED FROM EN
+    //! If editing translations files directly please ignore this in all
+    //! languages apart from en. Content will be auto-copied from en.
     //!////////////////////////////////
     'language_select' => [
         'en' => 'English',
@@ -152,15 +167,16 @@ return [
         'sk' => 'Slovensky',
         'cs' => 'Česky',
         'sv' => 'Svenska',
-        'kr' => '한국어',
+        'ko' => '한국어',
         'ja' => '日本語',
         'pl' => 'Polski',
         'it' => 'Italian',
         'ru' => 'Русский',
         'uk' => 'Українська',
         'zh_CN' => '简体中文',
-	'zh_TW' => '繁體中文',
-	'hu' => 'Magyar'
+        'zh_TW' => '繁體中文',
+        'hu' => 'Magyar',
+        'tr' => 'Türkçe',
     ]
     //!////////////////////////////////
 ];

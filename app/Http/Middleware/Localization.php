@@ -27,7 +27,7 @@ class Localization
         'fr' => 'fr_FR',
         'it' => 'it_IT',
         'ja' => 'ja',
-        'kr' => 'ko_KR',
+        'ko' => 'ko_KR',
         'nl' => 'nl_NL',
         'pl' => 'pl_PL',
         'pt_BR' => 'pt_BR',
@@ -37,6 +37,7 @@ class Localization
         'uk' => 'uk_UA',
         'zh_CN' => 'zh_CN',
         'zh_TW' => 'zh_TW',
+        'tr' => 'tr_TR',
     ];
 
     /**

@@ -18,6 +18,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Contracts\User as SocialUser;
 use Validator;
 
@@ -77,7 +79,7 @@ class RegisterController extends Controller
         return Validator::make($data, [
             'name' => 'required|min:2|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|min:6',
+            'password' => 'required|min:8',
         ]);
     }
 
@@ -101,7 +103,11 @@ class RegisterController extends Controller
     {
         $this->checkRegistrationAllowed();
         $socialDrivers = $this->socialAuthService->getActiveDrivers();
-        return view('auth.register', ['socialDrivers' => $socialDrivers]);
+        $samlEnabled = (config('saml2.enabled') === true) && (config('saml2.auto_register') === true);
+        return view('auth.register', [
+            'socialDrivers' => $socialDrivers,
+            'samlEnabled' => $samlEnabled,
+        ]);
     }
 
     /**
@@ -129,7 +135,7 @@ class RegisterController extends Controller
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => bcrypt($data['password']),
+            'password' => Hash::make($data['password']),
         ]);
     }
 
@@ -164,14 +170,14 @@ class RegisterController extends Controller
             try {
                 $this->emailConfirmationService->sendConfirmation($newUser);
             } catch (Exception $e) {
-                session()->flash('error', trans('auth.email_confirm_send_error'));
+                $this->showErrorNotification(trans('auth.email_confirm_send_error'));
             }
 
             return redirect('/register/confirm');
         }
 
         auth()->login($newUser);
-        session()->flash('success', trans('auth.register_success'));
+        $this->showSuccessNotification(trans('auth.register_success'));
         return redirect($this->redirectPath());
     }
 
@@ -191,14 +197,14 @@ class RegisterController extends Controller
 
     /**
      * The callback for social login services.
-     * @param $socialDriver
      * @param Request $request
+     * @param string $socialDriver
      * @return RedirectResponse|Redirector
      * @throws SocialSignInException
      * @throws UserRegistrationException
      * @throws SocialDriverNotConfigured
      */
-    public function socialCallback($socialDriver, Request $request)
+    public function socialCallback(Request $request, string $socialDriver)
     {
         if (!session()->has('social-callback')) {
             throw new SocialSignInException(trans('errors.social_no_action_defined'), '/login');
@@ -261,7 +267,7 @@ class RegisterController extends Controller
         $userData = [
             'name' => $socialUser->getName(),
             'email' => $socialUser->getEmail(),
-            'password' => str_random(30)
+            'password' => Str::random(30)
         ];
         return $this->registerUser($userData, $socialAccount, $emailVerified);
     }
